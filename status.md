@@ -1,1 +1,1 @@
-Current Status: Just Beginning
+Current Status: Learning Advanced Git
