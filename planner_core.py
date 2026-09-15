@@ -21,6 +21,13 @@ ALLOWED_SPRINT_TRANSITIONS = {
     "Active": ["Completed"],
     "Completed": [],
 }
+# The only story point values a task is allowed to use. These come from the
+# Fibonacci sequence (each number is the sum of the two before it: 1, 2, 3,
+# 5, 8, 13...). Planning Poker uses this scale because it's hard to be
+# precise about "is this a 9 or a 10?", so teams round to one of these
+# fixed options instead. Anything not in this list (like 4, 6, 7, 9, 10...)
+# is not allowed.
+VALID_STORY_POINTS = [1, 2, 3, 5, 8, 13]
 
 
 def validate_task_status(status):
@@ -28,11 +35,74 @@ def validate_task_status(status):
     if status not in TASK_STATUSES:
         raise ValueError(f"Invalid task status '{status}'. Must be one of {TASK_STATUSES}.")
 
+def validate_story_points(story_points):
+    """Check that story_points is allowed, and stop the program with an
+    error message if it isn't.
+
+    In plain terms: this function is a "bouncer" at the door. Before a
+    story point value is allowed into the system, we check it against the
+    guest list (VALID_STORY_POINTS). Two things are OK:
+      1. story_points is None (meaning "not estimated yet").
+      2. story_points is exactly one of 1, 2, 3, 5, 8, or 13.
+
+    Anything else (like 4, 7, 10, "five", or -2) is rejected by raising a
+    ValueError, which is Python's way of saying "stop right here, this
+    input is invalid". If nothing is raised, the value is valid.
+    """
+    if story_points is None:
+        return  # No estimate yet is fine, nothing more to check.
+
+    if story_points not in VALID_STORY_POINTS:
+        raise ValueError(
+            f"Invalid story_points '{story_points}'. Must be None or one of "
+            f"the Fibonacci values {VALID_STORY_POINTS} (e.g. 4 and 10 are "
+            "not allowed)."
+        )
+
+
+def validate_checklist(checklist):
+    """Raise ValueError unless checklist is a dict of str -> bool entries."""
+    if not isinstance(checklist, dict):
+        raise ValueError(f"Invalid checklist '{checklist}'. Must be a dict of item -> bool.")
+    for item, value in checklist.items():
+        if not isinstance(item, str) or not isinstance(value, bool):
+            raise ValueError(f"Invalid checklist entry '{item}': '{value}'. Keys must be strings, values must be bool.")
+
 
 def validate_retro_category(category):
     """Raise ValueError if `category` is not an allowed retrospective category."""
     if category not in RETRO_CATEGORIES:
         raise ValueError(f"Invalid category '{category}'. Must be one of {RETRO_CATEGORIES}.")
+
+
+def is_ready_for_sprint(task):
+    """Check a task's Definition of Ready (DoR).
+
+    A task is ready to be pulled into a sprint only once it has a DoR
+    checklist, that checklist is non-empty, and every item on it is True.
+    A task that is already blocked is never ready.
+    """
+    checklist = task.get("dor_checklist", {})
+    if task.get("blocked"):
+        return False
+    if not checklist:
+        return False
+    return all(checklist.values())
+
+
+def is_ready_to_close(task):
+    """Check a task's Definition of Done (DoD).
+
+    A task can only be closed (moved to "Done") once it has a DoD
+    checklist, that checklist is non-empty, and every item on it is True.
+    A blocked task can never be considered done.
+    """
+    checklist = task.get("dod_checklist", {})
+    if task.get("blocked"):
+        return False
+    if not checklist:
+        return False
+    return all(checklist.values())
 
 
 def validate_sprint_transition(current_status, new_status):
@@ -89,42 +159,146 @@ class Planner:
             )
         sprint["status"] = "Active"
 
-    def add_task(self, task_id, status="To Do"):
+    def add_task(self, task_id, status="To Do", story_points=None):
         """Register a task in the planner's task registry.
 
         This is the single source of truth for a task's current column
         (status). Tasks start out unassigned to any sprint (sprintId=None,
         i.e. sitting in the backlog) until add_task_to_sprint() is called.
+
+        New tasks start unblocked, with no blocker reason, and with empty
+        Definition of Ready / Definition of Done checklists (item -> bool).
         """
         validate_task_status(status)
-        self.tasks[task_id] = {"id": task_id, "status": status, "sprintId": None}
+        validate_story_points(story_points)
+        self.tasks[task_id] = {
+            "id": task_id,
+            "status": status,
+            "sprintId": None,
+            "story_points": story_points,
+            "blocked": False,
+            "blocker_reason": None,
+            "dor_checklist": {},
+            "dod_checklist": {},
+        }
         return self.tasks[task_id]
 
     def get_task(self, task_id):
         return self.tasks.get(task_id)
 
     def set_task_status(self, task_id, status):
-        """Update a task's column (To Do / In Progress / Done)."""
+        """Update a task's column (To Do / In Progress / Done).
+
+        Beginner note: think of this as the one "gatekeeper" function that
+        every column move must go through. It runs two checks, in order,
+        before it lets the move happen:
+          1. Is the task blocked? If so, stop immediately (see
+             set_task_blocked/unblock_task) — a blocked task can't move
+             anywhere until someone runs unblock_task().
+          2. Is the destination "Done"? If so, the task's Definition of
+             Done (DoD) checklist must have every item set to True. This
+             is checked using the is_ready_to_close() helper function.
+        If either check fails, we raise a ValueError, which stops the
+        program right there with an explanation instead of letting the
+        (invalid) move silently happen.
+        """
         task = self.get_task(task_id)
         if task is None:
             raise ValueError(f"Task '{task_id}' not found.")
+        if task["blocked"]:
+            raise ValueError(
+                f"Cannot move task '{task_id}': it is blocked "
+                f"(reason: {task['blocker_reason']}). Run unblock_task() first."
+            )
+        if status == "Done" and not is_ready_to_close(task):
+            raise ValueError(
+                f"Cannot move task '{task_id}' to 'Done': its dod_checklist "
+                "is missing items or has items that are not yet True."
+            )
         validate_task_status(status)
         task["status"] = status
 
-    def add_task_to_sprint(self, sprint_id, task_id):
-        """Assign a task to a sprint.
+    def set_task_story_points(self, task_id, story_points):
+        """Set a task's story point estimate (None or a non-negative number)."""
+        task = self.get_task(task_id)
+        if task is None:
+            raise ValueError(f"Task '{task_id}' not found.")
+        validate_story_points(story_points)
+        task["story_points"] = story_points
 
-        Auto-registers the task (as "To Do") in the task registry if it
-        hasn't been seen before, so callers don't have to call add_task()
-        separately first.
+    def set_task_blocked(self, task_id, blocked, blocker_reason=None):
+        """Flag a task as blocked/unblocked.
+
+        A blocked task must always carry a non-empty blocker_reason so the
+        team knows why it's stuck; unblocking a task always clears the
+        reason.
+        """
+        task = self.get_task(task_id)
+        if task is None:
+            raise ValueError(f"Task '{task_id}' not found.")
+        if blocked and not blocker_reason:
+            raise ValueError("blocker_reason is required when marking a task as blocked.")
+        task["blocked"] = bool(blocked)
+        task["blocker_reason"] = blocker_reason if blocked else None
+
+    def unblock_task(self, task_id):
+        """The only way to clear a task's blocked flag, allowing it to move again."""
+        self.set_task_blocked(task_id, False)
+
+    def update_task_checklist(self, task_id, checklist_name, item, value):
+        """Set a single item in a task's 'dor_checklist' or 'dod_checklist'."""
+        task = self.get_task(task_id)
+        if task is None:
+            raise ValueError(f"Task '{task_id}' not found.")
+        if checklist_name not in ("dor_checklist", "dod_checklist"):
+            raise ValueError("checklist_name must be 'dor_checklist' or 'dod_checklist'.")
+        if not isinstance(item, str) or not isinstance(value, bool):
+            raise ValueError("Checklist item must be a string and value must be a bool.")
+        task[checklist_name][item] = value
+
+    def add_task_to_sprint(self, sprint_id, task_id):
+        """Move a task from the Product Backlog into a sprint.
+
+        Beginner note: in Python, "backlog" just means a task that exists
+        in self.tasks but has sprintId set to None (see add_task()). This
+        function is the only place that's allowed to change that to an
+        actual sprint id, and it acts as a gatekeeper with two rules,
+        checked in order:
+          1. story_points must be a number greater than 0 — meaning the
+             task has actually been estimated (e.g. via Planning Poker).
+             A value of None or 0 means "not estimated yet", so the move
+             is rejected.
+          2. Every item in the task's dor_checklist (Definition of Ready)
+             must be True. This is checked using the is_ready_for_sprint()
+             helper function, which also refuses blocked tasks.
+        If either rule isn't met, we raise a ValueError (Python's way of
+        stopping the program with an error message) instead of letting an
+        unready task quietly slip into the sprint.
         """
         sprint = self.get_sprint(sprint_id)
         if sprint is None:
             raise ValueError(f"Sprint '{sprint_id}' not found.")
-        if task_id not in self.tasks:
-            self.add_task(task_id)
+        task = self.get_task(task_id)
+        if task is None:
+            raise ValueError(
+                f"Task '{task_id}' not found. Register it with add_task() "
+                "and complete its DoR checklist before pulling it into a sprint."
+            )
+
+        if not task["story_points"] or task["story_points"] <= 0:
+            raise ValueError(
+                f"Cannot move task '{task_id}' into sprint '{sprint_id}': it needs a "
+                "story_points value greater than 0 (estimate it first, e.g. with Planning Poker)."
+            )
+
+        if not is_ready_for_sprint(task):
+            raise ValueError(
+                f"Cannot move task '{task_id}' into sprint '{sprint_id}': its dor_checklist "
+                "is missing items or has items that are not yet True."
+            )
+
         sprint["taskIds"].append(task_id)
-        self.tasks[task_id]["sprintId"] = sprint_id
+        task["sprintId"] = sprint_id
 
     def complete_sprint(self, sprint_id):
         """Mark a sprint "Completed"; unfinished tasks return to the backlog.
