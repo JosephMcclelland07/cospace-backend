@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Kanban Sprint & Retrospective Schema",
+  "type": "object",
+  "properties": {
+    "sprints": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/sprint" }
+    },
+    "retrospectiveCards": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/retrospectiveCard" }
+    }
+  },
+  "required": ["sprints", "retrospectiveCards"],
+
+  "definitions": {
+    "sprint": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sprint"
+        },
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["Planning", "Active", "Completed"]
+        },
+        "taskIds": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "IDs of tasks assigned to this sprint"
+        }
+      },
+      "required": ["id", "name", "status", "taskIds"],
+      "additionalProperties": false
+    },
+
+    "retrospectiveCard": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the retrospective card"
+        },
+        "sprintId": {
+          "type": "string",
+          "description": "ID of the completed sprint this card belongs to"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["Went Well", "To Improve", "Action Item"]
+        },
+        "content": {
+          "type": "string",
+          "description": "The text of the retrospective note"
+        }
+      },
+      "required": ["id", "sprintId", "category", "content"],
+      "additionalProperties": false
+    }
+  }
+}
