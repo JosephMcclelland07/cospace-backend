@@ -13,6 +13,35 @@ STATE_FILE = "state.json"
 TASK_STATUSES = ["To Do", "In Progress", "Done"]
 # The only categories a retrospective card may use.
 RETRO_CATEGORIES = ["Went Well", "To Improve", "Action Item"]
+# The lifecycle a sprint moves through, and the only transitions allowed
+# between them. A sprint can never move backwards or skip a state.
+SPRINT_STATUSES = ["Planning", "Active", "Completed"]
+ALLOWED_SPRINT_TRANSITIONS = {
+    "Planning": ["Active"],
+    "Active": ["Completed"],
+    "Completed": [],
+}
+
+
+def validate_task_status(status):
+    """Raise ValueError if `status` is not a recognised task column."""
+    if status not in TASK_STATUSES:
+        raise ValueError(f"Invalid task status '{status}'. Must be one of {TASK_STATUSES}.")
+
+
+def validate_retro_category(category):
+    """Raise ValueError if `category` is not an allowed retrospective category."""
+    if category not in RETRO_CATEGORIES:
+        raise ValueError(f"Invalid category '{category}'. Must be one of {RETRO_CATEGORIES}.")
+
+
+def validate_sprint_transition(current_status, new_status):
+    """Raise ValueError if moving a sprint from `current_status` to `new_status` isn't allowed."""
+    if new_status not in ALLOWED_SPRINT_TRANSITIONS.get(current_status, []):
+        raise ValueError(
+            f"Cannot move a sprint from '{current_status}' to '{new_status}'. "
+            f"Allowed next state(s): {ALLOWED_SPRINT_TRANSITIONS.get(current_status, [])}."
+        )
 
 
 class Planner:
@@ -32,12 +61,12 @@ class Planner:
         # not their column/status.
         self.tasks = {}
 
-    def create_sprint(self, id, name, task_ids=[]):
+    def create_sprint(self, id, name, task_ids=None):
         sprint = {
             "id": id,
             "name": name,
             "status": "Planning",
-            "taskIds": task_ids,
+            "taskIds": list(task_ids) if task_ids else [],
         }
         self.sprints.append(sprint)
         return sprint
@@ -51,6 +80,7 @@ class Planner:
         sprint = self.get_sprint(sprint_id)
         if sprint is None:
             raise ValueError(f"Sprint '{sprint_id}' not found.")
+        validate_sprint_transition(sprint["status"], "Active")
         active_sprint = next((s for s in self.sprints if s["status"] == "Active"), None)
         if active_sprint is not None and active_sprint["id"] != sprint_id:
             raise ValueError(
@@ -66,8 +96,7 @@ class Planner:
         (status). Tasks start out unassigned to any sprint (sprintId=None,
         i.e. sitting in the backlog) until add_task_to_sprint() is called.
         """
-        if status not in TASK_STATUSES:
-            raise ValueError(f"Invalid task status '{status}'. Must be one of {TASK_STATUSES}.")
+        validate_task_status(status)
         self.tasks[task_id] = {"id": task_id, "status": status, "sprintId": None}
         return self.tasks[task_id]
 
@@ -79,8 +108,7 @@ class Planner:
         task = self.get_task(task_id)
         if task is None:
             raise ValueError(f"Task '{task_id}' not found.")
-        if status not in TASK_STATUSES:
-            raise ValueError(f"Invalid task status '{status}'. Must be one of {TASK_STATUSES}.")
+        validate_task_status(status)
         task["status"] = status
 
     def add_task_to_sprint(self, sprint_id, task_id):
@@ -112,6 +140,7 @@ class Planner:
         sprint = self.get_sprint(sprint_id)
         if sprint is None:
             raise ValueError(f"Sprint '{sprint_id}' not found.")
+        validate_sprint_transition(sprint["status"], "Completed")
 
         returned_to_backlog = []
         # Iterate over a copy of taskIds since we mutate the list while looping.
@@ -144,10 +173,7 @@ class Planner:
                 f"sprint is still '{sprint['status']}'. Retrospectives only "
                 "happen after a sprint is Completed."
             )
-        if category not in RETRO_CATEGORIES:
-            raise ValueError(
-                f"Invalid category '{category}'. Must be one of {RETRO_CATEGORIES}."
-            )
+        validate_retro_category(category)
 
         card = {
             "id": id,
@@ -168,26 +194,24 @@ class Planner:
     @classmethod
     def from_dict(cls, data):
         planner = cls()
-        planner.sprints = data["sprints"]
-        planner.retrospective_cards = data["retrospectiveCards"]
+        planner.sprints = data.get("sprints", [])
+        planner.retrospective_cards = data.get("retrospectiveCards", [])
         planner.tasks = data.get("tasks", {})
         return planner
 
 
-
 def load_state(path=STATE_FILE):
     try:
-        with open(path, "r") as f:
+        with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
-        return Planner.from_dict(data)
-    except:
+    except (FileNotFoundError, json.JSONDecodeError):
         return Planner()
+    return Planner.from_dict(data)
 
 
 def save_state(planner, path=STATE_FILE):
-    f = open(path, "w")
-    json.dump(planner.to_dict(), f)
-    f.close()
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(planner.to_dict(), f, indent=2, sort_keys=True)
 
 
 if __name__ == "__main__":
