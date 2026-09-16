@@ -1,5 +1,5 @@
 CREATE TABLE teams (
-    id INT PRIMARY KEY,
+    id INT PRIMARY KEY, 
     name VARCHAR(25) NOT NULL,
     department_name VARCHAR(25) NOT NULL
 );
