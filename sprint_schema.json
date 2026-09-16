@@ -10,9 +10,14 @@
     "retrospectiveCards": {
       "type": "array",
       "items": { "$ref": "#/definitions/retrospectiveCard" }
+    },
+    "tasks": {
+      "type": "object",
+      "description": "All known tasks, keyed by task id",
+      "additionalProperties": { "$ref": "#/definitions/task" }
     }
   },
-  "required": ["sprints", "retrospectiveCards"],
+  "required": ["sprints", "retrospectiveCards", "tasks"],
 
   "definitions": {
     "sprint": {
@@ -60,6 +65,58 @@
         }
       },
       "required": ["id", "sprintId", "category", "content"],
+      "additionalProperties": false
+    },
+
+    "task": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["To Do", "In Progress", "Done"]
+        },
+        "sprintId": {
+          "type": ["string", "null"],
+          "description": "ID of the sprint this task is assigned to, or null if it is in the backlog"
+        },
+        "story_points": {
+          "type": ["number", "null"],
+          "minimum": 0,
+          "description": "Estimation effort/size for the task, or null if not yet estimated"
+        },
+        "blocked": {
+          "type": "boolean",
+          "description": "Whether the task is currently blocked from progressing"
+        },
+        "blocker_reason": {
+          "type": ["string", "null"],
+          "description": "Why the task is blocked; required when blocked is true, null otherwise"
+        },
+        "dor_checklist": {
+          "type": "object",
+          "description": "Definition of Ready checklist, item name -> completed (bool)",
+          "additionalProperties": { "type": "boolean" }
+        },
+        "dod_checklist": {
+          "type": "object",
+          "description": "Definition of Done checklist, item name -> completed (bool)",
+          "additionalProperties": { "type": "boolean" }
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "sprintId",
+        "story_points",
+        "blocked",
+        "blocker_reason",
+        "dor_checklist",
+        "dod_checklist"
+      ],
       "additionalProperties": false
     }
   }
