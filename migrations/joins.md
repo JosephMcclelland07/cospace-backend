@@ -1,198 +1,7 @@
--- ==========================================
--- INNER JOIN
--- Show users and their teams
--- ==========================================
+# SQL Joins & Booking System Cheatsheet
 
-SELECT u.username,
-       t.name AS team_name
-FROM users u
-INNER JOIN teams t
-ON u.team_id = t.id;
-
-
--- ==========================================
--- LEFT JOIN
--- Show all users, even if they have no team
--- ==========================================
-
-SELECT u.username,
-       t.name AS team_name
-FROM users u
-LEFT JOIN teams t
-ON u.team_id = t.id;
-
-
--- ==========================================
--- FIND TEAMS WITH NO USERS
--- ==========================================
-
-SELECT t.name
-FROM teams t
-LEFT JOIN users u
-ON t.id = u.team_id
-WHERE u.id IS NULL;
-
-
--- ==========================================
--- COUNT USERS PER TEAM
--- ==========================================
-
-SELECT t.name,
-       COUNT(u.id) AS user_count
-FROM teams t
-LEFT JOIN users u
-ON t.id = u.team_id
-GROUP BY t.id, t.name;
-
-
--- ==========================================
--- SHOW BOOKINGS WITH USER AND DESK DETAILS
--- ==========================================
-
-SELECT u.username,
-       d.name AS desk_name,
-       b.start_time,
-       b.end_time
-FROM bookings b
-INNER JOIN users u
-ON b.user_id = u.id
-INNER JOIN desks d
-ON b.desk_id = d.id;
-
-
--- ==========================================
--- FIND DESKS WITH NO BOOKINGS
--- ==========================================
-
-SELECT d.name
-FROM desks d
-LEFT JOIN bookings b
-ON d.id = b.desk_id
-WHERE b.id IS NULL;
-
-
--- ==========================================
--- COUNT BOOKINGS PER DESK
--- ==========================================
-
-SELECT d.name,
-       COUNT(b.id) AS booking_count
-FROM desks d
-LEFT JOIN bookings b
-ON d.id = b.desk_id
-GROUP BY d.id, d.name;
-
-
--- ==========================================
--- UPDATE
--- Move a user to another team
--- ==========================================
-
-UPDATE users
-SET team_id = 2
-WHERE id = 1;
-
-
--- CHECK UPDATE
-
-SELECT *
-FROM users
-WHERE id = 1;
-
-
--- ==========================================
--- DELETE
--- Remove one user
--- ==========================================
-
-DELETE FROM users
-WHERE id = 5;
-
-
--- CHECK DELETE
-
-SELECT *
-FROM users;
-
-
--- ==========================================
--- VIEW ALL USERS
--- ==========================================
-
-SELECT *
-FROM users;
-
-
--- ==========================================
--- VIEW ALL TEAMS
--- ==========================================
-
-SELECT *
-FROM teams;
-
-
--- ==========================================
--- VIEW ALL BOOKINGS
--- ==========================================
-
-SELECT *
-FROM bookings;
-
-
--- ==========================================
--- VIEW ALL DESKS
--- ==========================================
-
-SELECT *
-FROM desks;
-
-
--- ==========================================
--- DESCRIBE TABLES
--- ==========================================
-
-DESCRIBE users;
-
-DESCRIBE teams;
-
-DESCRIBE desks;
-
-DESCRIBE bookings;
-
-
--- ==========================================
--- FIND USERS WITHOUT A TEAM
--- ==========================================
-
-SELECT u.username
-FROM users u
-LEFT JOIN teams t
-ON u.team_id = t.id
-WHERE t.id IS NULL;
-
-
--- ==========================================
--- FIND BOOKINGS WITHOUT A USER
--- ==========================================
-
-SELECT b.id
-FROM bookings b
-LEFT JOIN users u
-ON b.user_id = u.id
-WHERE u.id IS NULL;
-
-
--- =======================
-
-
-
-
-
-# SQL Joins, Indexes & Booking Constraint Notes
-
-## Inner Join
-
-Returns only records that exist in both tables.
+## INNER JOIN
+Returns only matching records.
 
 ```sql
 SELECT u.username,
@@ -204,9 +13,8 @@ ON u.team_id = t.id;
 
 ---
 
-## Left Join
-
-Returns all records from the left table and matching records from the right table.
+## LEFT JOIN
+Returns all records from the left table.
 
 ```sql
 SELECT u.username,
@@ -241,446 +49,231 @@ ON t.id = u.team_id
 GROUP BY t.id, t.name;
 ```
 
-### Important
-
-Correct:
-
-```sql
-COUNT(u.id)
-```
-
-Incorrect:
-
-```sql
-COUNT(*)
-```
-
-*COUNT(u.id)` ignores NULL values*and correctly shows 0 for teams wi*hout users.
+✅ Use `COUNT(u.id)` instead of `COUNT(*)` so teams with no users show `0`.
 
 ---
 
-*# Show*Which User Booked Which Desk*
+## Show Booking Details
+
 ```sql
 SELECT u.username,
-       *.name*AS desk_name,
-*      b.start_time,
-       b.end_t*me
+       d.name AS desk_name,
+       b.start_time,
+       b.end_time
 FROM bookings b
-INNER JOIN user* u
-ON b.user_id = u.id
-INNER JOIN *esks d
-ON b.desk_id = d.id;
-*``
+JOIN users u ON b.user_id = u.id
+JOIN desks d ON b.desk_id = d.id;
+```
 
-*--
+---
 
-## Find Desks With No*Bookings
+## Find Desks With No Bookings
 
 ```sql
 SELECT d.name
-*ROM desks d
+FROM desks d
 LEFT JOIN bookings b
-O* d.id = b.desk_id
-WHERE b*id IS*NULL;
+ON d.id = b.desk_id
+WHERE b.id IS NULL;
 ```
 
 ---
 
-## Count Bookings *er Desk
+## Count Bookings Per Desk
 
-```sql*SELECT d.name,
-       COUNT*b.id) AS booking_count
-*ROM desks d
+```sql
+SELECT d.name,
+       COUNT(b.id) AS booking_count
+FROM desks d
 LEFT JOIN bookings b
-O* d.id*= b.desk_id
-GROUP BY*d.id, d.name*
+ON d.id = b.desk_id
+GROUP BY d.id, d.name;
 ```
 
 ---
 
 ## Update a User
 
-```sq*
+```sql
 UPDATE users
-*ET team_id = 2
+SET team_id = 2
 WHERE id = 1;
 ```
 
-*heck*
+Check:
 
 ```sql
 SELECT *
 FROM users
-WHERE*id =*1;
+WHERE id = 1;
 ```
 
 ---
 
 ## Delete a User
 
-```*ql
-*ELETE FROM users
+```sql
+DELETE FROM users
 WHERE id = 5;
-```*
-Check:
-
-```sql*SELECT *
-FROM users;
 ```
 
 ---
 
-## *how All Data
-
-### Users
-
-```sql*SELECT** FROM users;
-```
-
-### Teams
-
-```s*l
-*ELECT * FROM teams;
-```
-
-### Desks*
-```sql
-*ELECT * FROM desks;
-```
-
-### Booki*gs
+## View Data
 
 ```sql
-SELECT** FROM bookings;
+SELECT * FROM users;
+SELECT * FROM teams;
+SELECT * FROM desks;
+SELECT * FROM bookings;
 ```
 
 ---
 
-## Desc*ibe Table Structure
+## Describe Tables
 
 ```sql
-*ESCRIBE users;
-```
-
-*``sql
+DESCRIBE users;
 DESCRIBE teams;
-*``
-
-*``sql
-DESCRIBE desks*
-```
-
-```sql
+DESCRIBE desks;
 DESCRIBE bookings;
-``*
+```
 
 ---
 
-# Unique Index Exercise
+## Find Missing Records
 
-##*Create the Unique Index (002 Up Mi*ration)
+### Users Without a Team
 
 ```sql
-CREATE UNIQUE INDE* idx_bookings_desk_date
-ON booking* (desk_id, start_time);
+SELECT u.username
+FROM users u
+LEFT JOIN teams t
+ON u.team_id = t.id
+WHERE t.id IS NULL;
 ```
 
-*urpose:
-
-* Prevent duplicate bookings
-- One*desk*can only be booked once for*a particular time slot
-
----
-
-##*Check the*Index Exists
-
-```sql*SHOW*INDEX FROM bookings;
-```
-
-Expected*
-
-```text**dx_bookings_desk_date
-Non_unique =*0
-```
-
-*--
-
-## Insert a Booking
-
-*``sql
-INSERT INTO bookings (
-    i*,
-    user_id,
-    desk_id,
-    st*rt_time,
-    end_time
-*
-VALUES (
-    1,
-    1*
-    1,
-    '*026*09-16 09:00:*0',
-    '2026-09-16 17:00:00'
-*;
-```
-
-*xpected:
-
-*``text
-1*row affected
-```
-
-*--
-
-## Attempt*to Double Book the Desk
+### Bookings Without a User
 
 ```sql
-IN*ERT INTO bookings (
-    id,
-    us*r_id*
-    desk_id,
-    start_time,
-*   end_time
-)
-VALUES (
-    2*
-*   2,
-    1,
-    '*026-09-16 09:00:00',
-*   '*026-09*16 17:00:00'
-);
+SELECT b.id
+FROM bookings b
+LEFT JOIN users u
+ON b.user_id = u.id
+WHERE u.id IS NULL;
 ```
-
-Expected:
-
-``*text*ERROR 1062
-```
-
-Because*the same desk is*already booked at the same time.
-
-*--
-
-## Book the Same Desk on a Dif*erent Day
-
-```sql*INSERT INTO bookings (
-    id,
-   *user_id,
-    desk_id,
-    start_ti*e,
-    end_time
-)
-VALUES (
-    3*
-    2,
-    *,
-*   '2026-09-17 09*00:00',
-    '*026-09-*7 17:00:00'
-*;
-```
-
-Expected:
-
-```text*1 row affected
-*``
 
 ---
 
-## Remove the Unique Inde* (002 Down Migration*
+# Unique Index (Prevent Double Booking)
 
-```sql*DROP INDEX idx_bookings_desk_date*ON bookings;
-```
-
-*--
-
-## Verify*Index Removal
+## Create Index
 
 ```sql
-SHOW*INDEX FROM bookings;
+CREATE UNIQUE INDEX idx_bookings_desk_date
+ON bookings (desk_id, start_time);
 ```
 
-Should*no longer show:
+Prevents the same desk being booked twice at the same time.
 
-```text*idx_bookings*desk_date
+---
+
+## Check Index
+
+```sql
+SHOW INDEX FROM bookings;
 ```
 
 ---
 
-## Insert a Du*licate Booking After*Removing the Index
+## Remove Index
 
-*``sql
-INSERT INTO bookings (
-    i*,
-    user_id,
-    desk_id,
-    st*rt_time,
-    end_time
-)
-VALUES *
-    999*
-    2,
-    1,
-*   '2026-09-16 *9:00:00',
-    '*026*09-16 17:00:00'
-*;
+```sql
+DROP INDEX idx_bookings_desk_date
+ON bookings;
 ```
-
-Expected:
-
-```text*1 row affected
-*``
-
-This proves the index was*enforcing the rule.
 
 ---
 
-##*Find Duplicate Bookings
+## Find Duplicate Bookings
 
-```sql**ELECT desk_id,
+```sql
+SELECT desk_id,
        start_time,
        COUNT(*) AS total
-FROM bookings
-GROUP BY desk_id, start_time
+*ROM bookings
+GROUP BY desk_id, sta*t_time
 HAVING COUNT(*) > 1;
 ```
 
 ---
 
-## View Duplicate*Rows
+## Delete a Duplicate
 
 ```sql
-SELECT *
-FROM booking*
-WHERE desk_id = 1
-  AND start_tim* = '2026-09-16 09:00:00';
+DELETE FROM bookings
+WHERE id = 999;
 ```
-
----*
-## Delete a Duplicate Row
-
-```sql*DELETE FROM bookings
-WHERE id = 99*;
-```
-
-Replace `999` with the dupl*cate booking ID.
 
 ---
 
-## Recreate*the Index
+# Common Errors
 
-```sql
-CREATE UNIQUE IN*EX idx_bookings_desk_date
-ON*bookings*(desk_id, start_time);
+### Error 1062
+
+```text
+Duplicate entry
 ```
 
-Note:
-*This will*fail*with:
+A PRIMARY KEY or UNIQUE INDEX is preventing duplicate data.
 
-*``text
-ERROR 1062
-*``
+### Error 1452
 
-if duplicate bookings still ex*st.
+```text
+Cannot add or update a child row
+```
 
-You must remove*all duplicates first.
+A FOREIGN KEY references a record that does not exist.
+
+Example:
+
+```sql
+INSERT INTO bookings (user_id)
+VALUES (99);
+```
+
+when no user with ID 99 exists.
 
 ---
 
-##*Find*All Remaining Duplicates
-
-```sql
-S*LECT desk_id,
-       start_time,
-*      COUNT(*) AS total
-FROM bookings
-GROUP BY desk_id, start_time
-HAVING COUNT(*) > 1;
-```
-
-*eep deleting duplicates*until this query returns:
-
-```text*Empty*set
-```
-
-Then recreate the index s*ccessfully.
-
-*--
-
-# Key Concepts
-
-*# INNER JOIN
-
-Only matching record*.
+# Key Things to Remember
 
 ```sql
 INNER JOIN
 ```
 
----
-
-*# LEFT JOIN
-
-All records*from the left table plus matches.
-*```sql
-LEFT JOIN
-``*
-
-*--
-
-## Find*Missing*Records
+Only matching records.
 
 ```sql
-WHERE other_table.*d IS NULL
+LEFT JOIN
 ```
 
----
+All records from the left table plus matches.
 
-## Correct Cou*ting
+```sql
+WHERE other_table.id IS NULL
+```
+
+Find missing records.
 
 ```sql
 COUNT(column_name)
-``*
+```
 
-not
+Use with LEFT JOINs to get accurate counts.
 
 ```sql
-COUNT(*)
+CREATE UNIQUE INDEX
 ```
 
-when u*ing LEFT JOINs.
-
----
-
-## Unique In*ex
-
-```sql
-CREATE UNIQUE INDEX**``
-
-Prevents duplicate values*for the indexed*columns.
-
----
-
-## Error 1062
-
-```t*xt
-Duplicate entry
-```
-
-*eans a PRIMARY KEY or UNIQUE INDEX*is blocking duplicate data.
-
----
-
-*# Error 1452
-
-```text*Cannot add or update a child row
-*``
-
-*eans a FOREIGN KEY references*a record that does not exist.
-
-Exa*ple:
-
-*``sql
-user*id = 99
-```
-
-when there*is no user with ID 99.
-````*
+Prevents duplicate values.
