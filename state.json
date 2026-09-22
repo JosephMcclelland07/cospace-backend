@@ -1,1 +1,0 @@
-{"sprints": [{"id": "s1", "name": "Sprint 1", "status": "Active", "taskIds": ["t1"]}], "retrospectiveCards": [], "tasks": {"t1": {"id": "t1", "status": "To Do", "sprintId": "s1"}}}
