@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
-export const app = express();
+import bookingRouter from './routes/booking.routes';
 
-const bookingRouter = express.Router();
+export const app = express();
 
 const PORT = 5000;
 
