@@ -1,5 +1,5 @@
 SELECT CONCAT(u.first_name, ' ', u.last_name) AS full_name,
-       t.name AS team_name,
+       t.name AS ncat team_name,
        COUNT(b.id) AS total_bookings
 FROM users u
 LEFT JOIN teams t
@@ -16,13 +16,13 @@ ORDER BY full_name;
 
 ## LEFT JOIN teams links each colleague to their team and displays the team name.
 
-## LEFT JOIN bookings ensures that colleagues with no bookings are still included in the results.
+## LEFT JOIN bookings ensures that colleagues with NO BOOKING are still included in the results.
 
 ## COUNT(b.id) counts only actual booking records. If a colleague has no bookings, b.id is NULL, so the count correctly returns 0.
 
 ## GROUP BY groups all bookings belonging to the same colleague into a single row, allowing the total number of bookings to be calculated.
 
-## Using LEFT JOIN instead of INNER JOIN ensures colleagues with no bookings are not excluded from the results.
+## Using LEFT JOIN instead of INNER JOIN ensures colleagues with NO BOOKINGS are not excluded from the results.
 
 UPDATE users
 SET team_id = 2
