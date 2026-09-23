@@ -11,14 +11,38 @@ export class BookingController {
   }
 
   getAllBookings = (
-    _req: Request,
+    req: Request,
     res: Response
   ): void => {
     console.log('Controller: getAllBookings');
 
-    const bookings = this.bookingService.findAll();
+    const page = parseInt(
+      req.query.page as string,
+      10
+    );
 
-    res.status(200).json(bookings);
+    const limit = parseInt(
+      req.query.limit as string,
+      10
+    );
+
+    const safePage =
+      !isNaN(page) && page >= 1
+        ? page
+        : 1;
+
+    const safeLimit =
+      !isNaN(limit) && limit >= 1
+        ? Math.min(limit, 50)
+        : 10;
+
+    const result =
+      this.bookingService.getPaginatedShifts(
+        safePage,
+        safeLimit
+      );
+
+    res.status(200).json(result);
   };
 
   getBookingById = (
@@ -44,9 +68,8 @@ export class BookingController {
     res: Response
   ): void => {
     try {
-      const booking = this.bookingService.create(
-        req.body
-      );
+      const booking =
+        this.bookingService.create(req.body);
 
       res.status(201).json(booking);
     } catch (error) {
@@ -108,21 +131,21 @@ export class BookingController {
   };
 
   patchBooking = (
-  req: Request,
-  res: Response
-): void => {
-  const booking = this.bookingService.toggleBooking(
-    Number(req.params.id)
-  );
+    req: Request,
+    res: Response
+  ): void => {
+    const booking =
+      this.bookingService.toggleBooking(
+        Number(req.params.id)
+      );
 
-  if (!booking) {
-    res.status(404).json({
-      error: 'Booking not found'
-    });
-    return;
-  }
+    if (!booking) {
+      res.status(404).json({
+        error: 'Booking not found'
+      });
+      return;
+    }
 
-  res.status(200).json(booking);
-};
-
+    res.status(200).json(booking);
+  };
 }
