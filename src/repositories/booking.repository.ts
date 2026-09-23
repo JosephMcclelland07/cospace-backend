@@ -1,18 +1,22 @@
-export interface Booking {
-  id: number;
-  desk: string;
-  floor: number;
-  date: string;
-  active: boolean;
-}
+import { Booking } from '../schemas/booking.schema';
 
 export class BookingRepository {
   private bookings: Booking[] = [
-    { id: 1, desk: 'A1', floor: 1, date: '2026-09-22', active: true },
-    { id: 2, desk: 'B3', floor: 2, date: '2026-09-23', active: false },
-    { id: 3, desk: 'C5', floor: 3, date: '2026-09-24', active: true }
-  ];
-
+  {
+    id: 1,
+    desk: 'Desk A',
+    floor: 'Floor 1',
+    date: '2026-09-22T09:00:00Z',
+    active: true
+  },
+  {
+    id: 2,
+    desk: 'Desk B',
+    floor: 'Floor 2',
+    date: '2026-09-23T09:00:00Z',
+    active: false
+  }
+];
   findAll(): Booking[] {
     console.log('Repository: findAll');
     return this.bookings;
