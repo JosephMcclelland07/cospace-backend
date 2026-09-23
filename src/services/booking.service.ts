@@ -1,16 +1,36 @@
-import {
-  Booking,
-  BookingRepository
-} from '../repositories/booking.repository';
+import { BookingRepository } from '../repositories/booking.repository';
+import { Booking } from '../schemas/booking.schema';
 
 export class BookingService {
-  constructor(
-    private bookingRepository: BookingRepository
-  ) {}
+  private bookingRepository: BookingRepository;
+
+  constructor(bookingRepository: BookingRepository) {
+    this.bookingRepository = bookingRepository;
+  }
 
   findAll(): Booking[] {
-    console.log('Service: findAll');
     return this.bookingRepository.findAll();
+  }
+
+  getPaginatedShifts(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const data = this.bookingRepository.findPaginated(
+      skip,
+      limit
+    );
+
+    const total = this.bookingRepository.count();
+
+    return {
+      data,
+      meta: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   findById(id: number): Booking | undefined {
@@ -30,7 +50,7 @@ export class BookingService {
   update(
     id: number,
     data: Partial<Booking>
-  ): Booking | undefined {
+  ): Booking | null {
     if (
       data.desk &&
       data.desk.length < 3
@@ -46,20 +66,34 @@ export class BookingService {
     );
   }
 
+  toggleBooking(
+    id: number
+  ): Booking | null {
+    const booking =
+      this.bookingRepository.findById(id);
+
+    if (!booking) {
+      return null;
+    }
+
+    return this.bookingRepository.update(
+      id,
+      {
+        active: !booking.active,
+      }
+    );
+  }
+
   delete(id: number): boolean {
-    return this.bookingRepository.delete(id);
+  const existingBooking =
+    this.bookingRepository.findById(id);
+
+  if (!existingBooking) {
+    return false;
   }
 
-  toggleBooking(id: number): Booking | undefined {
-  const booking = this.bookingRepository.findById(id);
-
-  if (!booking) {
-    return undefined;
+  return this.bookingRepository.delete(id);
   }
 
-  booking.active = !booking.active;
-
-  return booking;
-}
 
 }
