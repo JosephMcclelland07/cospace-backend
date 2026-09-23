@@ -1,8 +1,42 @@
 import { Router } from 'express';
 import { BookingController } from '../controllers/booking.controller';
+import { validate } from '../middleware/validate';
+import { auth } from '../middleware/auth';
+
+``
 
 const router = Router();
 const bookingController = new BookingController();
+
+router.post(
+  '/',
+  validate([
+    'id',
+    'desk',
+    'floor',
+    'date',
+    'active'
+  ]),
+  (req, res) =>
+    bookingController.createBooking(req, res)
+);
+
+router.put(
+  '/:id',
+  validate([
+    'desk',
+    'floor',
+    'date',
+    'active'
+  ]),
+  (req, res) =>
+    bookingController.updateBooking(req, res)
+);
+
+router.get('/', (req, res) =>
+bookingController.getAllBookings(req, res)
+);
+
 
 router.get('/', (req, res) =>
   bookingController.getAllBookings(req, res)
