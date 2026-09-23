@@ -5,6 +5,7 @@ import { auth } from '../middleware/auth';
 import { validateSchema } from '../middleware/validate';
 import { createBookingSchema } from '../schemas/booking.schema';
 
+
 ``
 
 const router = Router();
