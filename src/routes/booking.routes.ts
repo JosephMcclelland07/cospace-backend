@@ -2,6 +2,9 @@ import { Router } from 'express';
 import { BookingController } from '../controllers/booking.controller';
 import { validate } from '../middleware/validate';
 import { auth } from '../middleware/auth';
+import { validateSchema } from '../middleware/validate';
+import { createBookingSchema } from '../schemas/booking.schema';
+
 
 ``
 
@@ -17,6 +20,14 @@ router.post(
     'date',
     'active'
   ]),
+  (req, res) =>
+    bookingController.createBooking(req, res)
+);
+
+router.post(
+  '/',
+  auth,
+  validateSchema(createBookingSchema),
   (req, res) =>
     bookingController.createBooking(req, res)
 );

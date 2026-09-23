@@ -3,6 +3,7 @@ import {
   Response,
   NextFunction
 } from 'express';
+import { ZodError } from 'zod';
 
 export const errorHandler = (
   err: Error,
@@ -10,8 +11,15 @@ export const errorHandler = (
   res: Response,
   _next: NextFunction
 ): void => {
-  console.error('Unhandled Error:');
   console.error(err.stack);
+
+  if (err instanceof ZodError) {
+    res.status(400).json({
+      errors: err.flatten()
+    });
+
+    return;
+  }
 
   res.status(500).json({
     error: 'Internal Server Error'
