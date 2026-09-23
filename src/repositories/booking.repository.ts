@@ -1,68 +1,73 @@
-import { Booking } from '../schemas/booking.schema';
+export interface Booking {
+  id: number;
+  desk: string;
+  floor: string;
+  date: string;
+  active: boolean;
+}
 
 export class BookingRepository {
   private bookings: Booking[] = [
-  {
-    id: 1,
-    desk: 'Desk A',
-    floor: 'Floor 1',
-    date: '2026-09-22T09:00:00Z',
-    active: true
-  },
-  {
-    id: 2,
-    desk: 'Desk B',
-    floor: 'Floor 2',
-    date: '2026-09-23T09:00:00Z',
-    active: false
-  }
-];
+    {
+      id: 1,
+      desk: 'A1',
+      floor: '1',
+      date: '2026-09-22',
+      active: true,
+    },
+    {
+      id: 2,
+      desk: 'B3',
+      floor: '2',
+      date: '2026-09-23',
+      active: false,
+    },
+  ];
+
   findAll(): Booking[] {
-    console.log('Repository: findAll');
     return this.bookings;
   }
 
   findById(id: number): Booking | undefined {
-    return this.bookings.find(
-      (booking) => booking.id === id
-    );
+    return this.bookings.find((booking) => booking.id === id);
   }
 
   create(booking: Booking): Booking {
     this.bookings.push(booking);
     return booking;
   }
-  update(
-    id: number,
-    data: Partial<Booking>
-  ): Booking | undefined {
-    const bookingIndex = this.bookings.findIndex(
-      (booking) => booking.id === id
-    );
 
-    if (bookingIndex === -1) {
-      return undefined;
+  update(id: number, updatedBooking: Partial<Booking>): Booking | null {
+    const booking = this.findById(id);
+
+    if (!booking) {
+      return null;
     }
 
-    this.bookings[bookingIndex] = {
-      ...this.bookings[bookingIndex],
-      ...data,
-      id
-    };
-
-    return this.bookings[bookingIndex];
+    Object.assign(booking, updatedBooking);
+    return booking;
   }
 
   delete(id: number): boolean {
-    const bookingIndex = this.bookings.findIndex(
+    const index = this.bookings.findIndex(
       (booking) => booking.id === id
     );
 
-    if (bookingIndex === -1) {
+    if (index === -1) {
       return false;
     }
 
-    this.bookings.splice(bookingIndex, 1);
+    this.bookings.splice(index, 1);
     return true;
   }
+
+  findPaginated(skip: number, limit: number): Booking[] {
+    return this.bookings.slice(skip, skip + limit);
+  }
+
+  count(): number {
+    return this.bookings.length;
+  }
 }
+
+export const bookingRepository = new BookingRepository();
