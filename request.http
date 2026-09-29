@@ -39,6 +39,8 @@ Content-Type: application/json"
  
 ### delete booking
 DELETE http://localhost:5000/bookings/102 HTTP/1.1
+
+GET http://localhost:5000/error
  
 ### Add user
 POST http://localhost:5000/auth/register
@@ -72,5 +74,10 @@ Authorization: Bearer super-secret-key
   "booking_date": "2026-11-29",
   "active": true
 }
- 
+
+ ### create booking with non-existent ID
+
+POST http://localhost:5000/bookings/99999
+Content-Type: application/json
+Authorization: Bearer super-secret-key
  

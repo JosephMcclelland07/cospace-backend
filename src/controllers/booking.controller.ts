@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { HTTP_STATUS } from '../constants/httpStatus';
 import { BookingRepository } from '../repositories/booking.repository';
 import { BookingService } from '../services/booking.service';
 
@@ -12,7 +13,8 @@ export class BookingController {
 
   getAllBookings = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     console.log('Controller: getAllBookings');
 
@@ -42,12 +44,13 @@ export class BookingController {
         safeLimit
       );
 
-    res.status(200).json(result);
+    res.status(HTTP_STATUS.OK).json(result);
   };
 
   getBookingById = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     const booking = this.bookingService.findById(
       Number(req.params.id)
@@ -55,36 +58,33 @@ export class BookingController {
 
     if (!booking) {
       res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ error: 'Booking not found' });
       return;
     }
 
-    res.status(200).json(booking);
+    res.status(HTTP_STATUS.OK).json(booking);
   };
 
   createBooking = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     try {
       const booking =
         this.bookingService.create(req.body);
 
-      res.status(201).json(booking);
+      res.status(HTTP_STATUS.CREATED).json(booking);
     } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid booking'
-      });
+      next(error);
     }
   };
 
   updateBooking = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     try {
       const booking =
@@ -95,25 +95,21 @@ export class BookingController {
 
       if (!booking) {
         res
-          .status(404)
+          .status(HTTP_STATUS.NOT_FOUND)
           .json({ error: 'Booking not found' });
         return;
       }
 
-      res.status(200).json(booking);
+      res.status(HTTP_STATUS.OK).json(booking);
     } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid booking'
-      });
+      next(error);
     }
   };
 
   deleteBooking = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     const deleted =
       this.bookingService.delete(
@@ -122,17 +118,18 @@ export class BookingController {
 
     if (!deleted) {
       res
-        .status(404)
+        .status(HTTP_STATUS.NOT_FOUND)
         .json({ error: 'Booking not found' });
       return;
     }
 
-    res.status(204).send();
+    res.status(HTTP_STATUS.NO_CONTENT).send();
   };
 
   patchBooking = (
     req: Request,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): void => {
     const booking =
       this.bookingService.toggleBooking(
@@ -140,12 +137,12 @@ export class BookingController {
       );
 
     if (!booking) {
-      res.status(404).json({
+      res.status(HTTP_STATUS.NOT_FOUND).json({
         error: 'Booking not found'
       });
       return;
     }
 
-    res.status(200).json(booking);
+    res.status(HTTP_STATUS.OK).json(booking);
   };
 }

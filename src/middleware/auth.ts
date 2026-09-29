@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
+import { HTTP_STATUS } from '../constants/httpStatus';
 
 export const auth = (
   req: Request,
@@ -18,7 +19,7 @@ export const auth = (
     return;
   }
 
-  res.status(401).json({
+  res.status(HTTP_STATUS.UNAUTHORIZED).json({
     error: 'Unauthorized'
   });
   

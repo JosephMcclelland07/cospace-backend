@@ -20,16 +20,16 @@ router.post(
     'date',
     'active'
   ]),
-  (req, res) =>
-    bookingController.createBooking(req, res)
+  (req, res, next) =>
+    bookingController.createBooking(req, res, next)
 );
 
 router.post(
   '/',
   auth,
   validateSchema(createBookingSchema),
-  (req, res) =>
-    bookingController.createBooking(req, res)
+  (req, res, next) =>
+    bookingController.createBooking(req, res, next)
 );
 
 router.put(
@@ -40,37 +40,37 @@ router.put(
     'date',
     'active'
   ]),
-  (req, res) =>
-    bookingController.updateBooking(req, res)
+  (req, res, next) =>
+    bookingController.updateBooking(req, res, next)
 );
 
-router.get('/', (req, res) =>
-bookingController.getAllBookings(req, res)
+router.get('/', (req, res, next) =>
+bookingController.getAllBookings(req, res, next)
 );
 
 
-router.get('/', (req, res) =>
-  bookingController.getAllBookings(req, res)
+router.get('/', (req, res, next) =>
+  bookingController.getAllBookings(req, res, next)
 );
 
-router.get('/:id', (req, res) =>
-  bookingController.getBookingById(req, res)
+router.get('/:id', (req, res, next) =>
+  bookingController.getBookingById(req, res, next)
 );
 
-router.post('/', (req, res) =>
-  bookingController.createBooking(req, res)
+router.post('/', (req, res, next) =>
+  bookingController.createBooking(req, res, next)
 );
 
-router.put('/:id', (req, res) =>
-  bookingController.updateBooking(req, res)
+router.put('/:id', (req, res, next) =>
+  bookingController.updateBooking(req, res, next)
 );
 
-router.patch('/:id', (req, res) =>
-  bookingController.patchBooking(req, res)
+router.patch('/:id', (req, res, next) =>
+  bookingController.patchBooking(req, res, next)
 );
 
-router.delete('/:id', (req, res) =>
-  bookingController.deleteBooking(req, res)
+router.delete('/:id', (req, res, next) =>
+  bookingController.deleteBooking(req, res, next)
 );
 
 export default router;
