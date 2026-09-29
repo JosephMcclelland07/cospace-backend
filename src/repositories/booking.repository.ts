@@ -22,6 +22,48 @@ export class BookingRepository {
       date: '2026-09-23',
       active: false,
     },
+    {
+      id: 3,
+      desk: 'C2',
+      floor: '1',
+      date: '2026-09-24',
+      active: true,
+    },
+    {
+      id: 4,
+      desk: 'A4',
+      floor: '2',
+      date: '2026-09-25',
+      active: false,
+    },
+    {
+      id: 5,
+      desk: 'B1',
+      floor: '3',
+      date: '2026-09-26',
+      active: true,
+    },
+    {
+      id: 6,
+      desk: 'C3',
+      floor: '1',
+      date: '2026-09-27',
+      active: true,
+    },
+    {
+      id: 7,
+      desk: 'A2',
+      floor: '2',
+      date: '2026-09-28',
+      active: false,
+    },
+    {
+      id: 8,
+      desk: 'B4',
+      floor: '3',
+      date: '2026-09-29',
+      active: true,
+    },
   ];
 
   findAll(): Booking[] {
