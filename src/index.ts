@@ -1,7 +1,7 @@
 import express, { Request, Response } from 'express';
+import authRouter from './routes/auth.routes';
 import bookingRouter from './routes/booking.routes';
 import { logger } from './middleware/logger';
-import { auth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { NotFoundError } from './errors';
 import { HTTP_STATUS } from './constants/httpStatus';
@@ -15,8 +15,6 @@ const PORT = 5000;
 app.use(express.json());
 app.use(logger);
 
-app.use(errorHandler);
-
 app.get('/', (_req: Request, res: Response) => {
   res.status(HTTP_STATUS.OK).json({
     status: 'active',
@@ -25,10 +23,7 @@ app.get('/', (_req: Request, res: Response) => {
 });
 
 app.use('/bookings', bookingRouter);
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.use('/auth', authRouter);
 
 process.on('SIGINT', () => {
   process.exit(0);
@@ -50,6 +45,12 @@ app.get("/boom-unexpected", () => {
 
 app.get("/boom-forbidden", () => {
    throw new ForbiddenError("You do not have permission to access this resource");
+});
+
+app.use(errorHandler);
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
 require('dotenv').config();

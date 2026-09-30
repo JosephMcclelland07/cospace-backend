@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { BookingController } from '../controllers/booking.controller';
 import { validate } from '../middleware/validate';
-import { auth } from '../middleware/auth';
+import { requireAuth } from '../middleware/requireAuth';
 import { validateSchema } from '../middleware/validate';
 import { createBookingSchema } from '../schemas/booking.schema';
 
@@ -13,20 +13,7 @@ const bookingController = new BookingController();
 
 router.post(
   '/',
-  validate([
-    'id',
-    'desk',
-    'floor',
-    'date',
-    'active'
-  ]),
-  (req, res, next) =>
-    bookingController.createBooking(req, res, next)
-);
-
-router.post(
-  '/',
-  auth,
+  requireAuth,
   validateSchema(createBookingSchema),
   (req, res, next) =>
     bookingController.createBooking(req, res, next)
@@ -55,10 +42,6 @@ router.get('/', (req, res, next) =>
 
 router.get('/:id', (req, res, next) =>
   bookingController.getBookingById(req, res, next)
-);
-
-router.post('/', (req, res, next) =>
-  bookingController.createBooking(req, res, next)
 );
 
 router.put('/:id', (req, res, next) =>
