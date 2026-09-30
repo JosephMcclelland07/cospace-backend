@@ -1,5 +1,5 @@
 import { BookingRepository } from '../repositories/booking.repository';
-import { Booking } from '../schemas/booking.schema';
+import { Prisma, type Booking } from '../generated/prisma/client';
 
 export class BookingService {
   private bookingRepository: BookingRepository;
@@ -8,19 +8,17 @@ export class BookingService {
     this.bookingRepository = bookingRepository;
   }
 
-  findAll(): Booking[] {
+  findAll(): Promise<Booking[]> {
     return this.bookingRepository.findAll();
   }
 
-  getPaginatedShifts(page: number, limit: number) {
+  async getPaginatedShifts(page: number, limit: number) {
     const skip = (page - 1) * limit;
 
-    const data = this.bookingRepository.findPaginated(
-      skip,
-      limit
-    );
-
-    const total = this.bookingRepository.count();
+    const [data, total] = await Promise.all([
+      this.bookingRepository.findPaginated(skip, limit),
+      this.bookingRepository.count(),
+    ]);
 
     return {
       data,
@@ -33,44 +31,26 @@ export class BookingService {
     };
   }
 
-  findById(id: number): Booking | undefined {
+  findById(id: number): Promise<Booking | null> {
     return this.bookingRepository.findById(id);
   }
 
-  create(booking: Booking): Booking {
-    if (booking.desk.length < 3) {
-      throw new Error(
-        'Desk name must be at least 3 characters long'
-      );
-    }
-
-    return this.bookingRepository.create(booking);
+  create(data: Prisma.BookingUncheckedCreateInput): Promise<Booking> {
+    return this.bookingRepository.create(data);
   }
 
   update(
     id: number,
-    data: Partial<Booking>
-  ): Booking | null {
-    if (
-      data.desk &&
-      data.desk.length < 3
-    ) {
-      throw new Error(
-        'Desk name must be at least 3 characters long'
-      );
-    }
-
+    data: Prisma.BookingUncheckedUpdateInput
+  ): Promise<Booking | null> {
     return this.bookingRepository.update(
       id,
       data
     );
   }
 
-  toggleBooking(
-    id: number
-  ): Booking | null {
-    const booking =
-      this.bookingRepository.findById(id);
+  async toggleBooking(id: number): Promise<Booking | null> {
+    const booking = await this.bookingRepository.findById(id);
 
     if (!booking) {
       return null;
@@ -84,16 +64,7 @@ export class BookingService {
     );
   }
 
-  delete(id: number): boolean {
-  const existingBooking =
-    this.bookingRepository.findById(id);
-
-  if (!existingBooking) {
-    return false;
+  delete(id: number): Promise<boolean> {
+    return this.bookingRepository.delete(id);
   }
-
-  return this.bookingRepository.delete(id);
-  }
-
-
 }

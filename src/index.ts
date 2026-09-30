@@ -5,7 +5,7 @@ import { auth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import { NotFoundError } from './errors';
 import { HTTP_STATUS } from './constants/httpStatus';
-
+import { ForbiddenError } from "./errors/forbiddenError";
 
 
 export const app = express();
@@ -47,3 +47,9 @@ app.get("/boom-app-error", () => {
 app.get("/boom-unexpected", () => {
   throw new Error("db connection string: postgres://user:pass@internal-host/db");
 });
+
+app.get("/boom-forbidden", () => {
+   throw new ForbiddenError("You do not have permission to access this resource");
+});
+
+require('dotenv').config();

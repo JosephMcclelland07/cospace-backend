@@ -81,3 +81,6 @@ POST http://localhost:5000/bookings/99999
 Content-Type: application/json
 Authorization: Bearer super-secret-key
  
+ ### throw forbidden error - 403
+GET http://localhost:5000/boom-forbidden
+
