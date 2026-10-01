@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema } from 'zod';
+import { HTTP_STATUS } from '../constants/httpStatus';
 
 export const validate = (requiredFields: string[]) => {
   return (
@@ -12,7 +13,7 @@ export const validate = (requiredFields: string[]) => {
     );
 
     if (missingFields.length > 0) {
-      res.status(400).json({
+      res.status(HTTP_STATUS.BAD_REQUEST).json({
         error: 'Missing required fields',
         missingFields
       });

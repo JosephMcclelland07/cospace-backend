@@ -3,7 +3,9 @@ import bookingRouter from './routes/booking.routes';
 import { logger } from './middleware/logger';
 import { auth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
-
+import { NotFoundError } from './errors';
+import { HTTP_STATUS } from './constants/httpStatus';
+import { ForbiddenError } from "./errors/forbiddenError";
 
 
 export const app = express();
@@ -16,7 +18,7 @@ app.use(logger);
 app.use(errorHandler);
 
 app.get('/', (_req: Request, res: Response) => {
-  res.status(200).json({
+  res.status(HTTP_STATUS.OK).json({
     status: 'active',
     message: 'CoSpace API is running'
   });
@@ -35,3 +37,19 @@ process.on('SIGINT', () => {
 process.on('SIGTERM', () => {
   process.exit(0);
 });
+
+// Route to trigger a test NotFoundError
+app.get("/boom-app-error", () => {
+  throw new NotFoundError("Test resource not found");
+});
+ 
+// Temporary: trigger a plain, unexpected error to verify sanitized 500 response
+app.get("/boom-unexpected", () => {
+  throw new Error("db connection string: postgres://user:pass@internal-host/db");
+});
+
+app.get("/boom-forbidden", () => {
+   throw new ForbiddenError("You do not have permission to access this resource");
+});
+
+require('dotenv').config();

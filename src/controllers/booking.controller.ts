@@ -1,4 +1,5 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
+import { HTTP_STATUS } from '../constants/httpStatus';
 import { BookingRepository } from '../repositories/booking.repository';
 import { BookingService } from '../services/booking.service';
 
@@ -12,8 +13,9 @@ export class BookingController {
 
   getAllBookings = (
     req: Request,
-    res: Response
-  ): void => {
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     console.log('Controller: getAllBookings');
 
     const page = parseInt(
@@ -36,116 +38,108 @@ export class BookingController {
         ? Math.min(limit, 50)
         : 10;
 
-    const result =
-      this.bookingService.getPaginatedShifts(
-        safePage,
-        safeLimit
-      );
-
-    res.status(200).json(result);
+    return this.bookingService
+      .getPaginatedShifts(safePage, safeLimit)
+      .then((result) => {
+        res.status(HTTP_STATUS.OK).json(result);
+      })
+      .catch(next);
   };
 
   getBookingById = (
     req: Request,
-    res: Response
-  ): void => {
-    const booking = this.bookingService.findById(
-      Number(req.params.id)
-    );
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    return this.bookingService
+      .findById(Number(req.params.id))
+      .then((booking) => {
+        if (!booking) {
+          res
+            .status(HTTP_STATUS.NOT_FOUND)
+            .json({ error: 'Booking not found' });
+          return;
+        }
 
-    if (!booking) {
-      res
-        .status(404)
-        .json({ error: 'Booking not found' });
-      return;
-    }
-
-    res.status(200).json(booking);
+        res.status(HTTP_STATUS.OK).json(booking);
+      })
+      .catch(next);
   };
 
-  createBooking = (
+  createBooking = async (
     req: Request,
-    res: Response
-  ): void => {
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const booking =
-        this.bookingService.create(req.body);
-
-      res.status(201).json(booking);
+      const booking = await this.bookingService.create(req.body);
+      res.status(HTTP_STATUS.CREATED).json(booking);
     } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid booking'
-      });
+      next(error);
     }
   };
 
-  updateBooking = (
+  updateBooking = async (
     req: Request,
-    res: Response
-  ): void => {
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
-      const booking =
-        this.bookingService.update(
-          Number(req.params.id),
-          req.body
-        );
+      const booking = await this.bookingService.update(
+        Number(req.params.id),
+        req.body
+      );
 
       if (!booking) {
         res
-          .status(404)
+          .status(HTTP_STATUS.NOT_FOUND)
           .json({ error: 'Booking not found' });
         return;
       }
 
-      res.status(200).json(booking);
+      res.status(HTTP_STATUS.OK).json(booking);
     } catch (error) {
-      res.status(400).json({
-        error:
-          error instanceof Error
-            ? error.message
-            : 'Invalid booking'
-      });
+      next(error);
     }
   };
 
   deleteBooking = (
     req: Request,
-    res: Response
-  ): void => {
-    const deleted =
-      this.bookingService.delete(
-        Number(req.params.id)
-      );
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    return this.bookingService
+      .delete(Number(req.params.id))
+      .then((deleted) => {
+        if (!deleted) {
+          res
+            .status(HTTP_STATUS.NOT_FOUND)
+            .json({ error: 'Booking not found' });
+          return;
+        }
 
-    if (!deleted) {
-      res
-        .status(404)
-        .json({ error: 'Booking not found' });
-      return;
-    }
-
-    res.status(204).send();
+        res.status(HTTP_STATUS.NO_CONTENT).send();
+      })
+      .catch(next);
   };
 
   patchBooking = (
     req: Request,
-    res: Response
-  ): void => {
-    const booking =
-      this.bookingService.toggleBooking(
-        Number(req.params.id)
-      );
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    return this.bookingService
+      .toggleBooking(Number(req.params.id))
+      .then((booking) => {
+        if (!booking) {
+          res.status(HTTP_STATUS.NOT_FOUND).json({
+            error: 'Booking not found'
+          });
+          return;
+        }
 
-    if (!booking) {
-      res.status(404).json({
-        error: 'Booking not found'
-      });
-      return;
-    }
-
-    res.status(200).json(booking);
+        res.status(HTTP_STATUS.OK).json(booking);
+      })
+      .catch(next);
   };
 }
