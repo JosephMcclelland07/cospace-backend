@@ -33,10 +33,19 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/jest": "^30.0.0",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.6.3",
+    "@types/supertest": "^7.2.1",
+    "cors": "^2.8.6",
+    "install": "^0.13.0",
+    "jest": "^30.5.2",
+    "npm": "^12.2.0",
     "prisma": "^7.10.0",
+    "supertest": "^7.3.1",
+    "ts-jest": "^29.4.14",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.9.3"
   }

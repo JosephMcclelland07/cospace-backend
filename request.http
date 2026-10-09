@@ -68,7 +68,8 @@ Authorization: Bearer super-secret-key
 ### create booking
 POST http://localhost:5000/bookings
 Content-Type: application/json
-Authorization: Bearer super-secret-key
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5MDc4MzA0MSwiZXhwIjoxNzkwNzg2NjQxLCJzdWIiOiIxIn0.GNCoP-QF7LHEh16d2Z163IPeeWXbnO25X6eZVbCCaEU
+
 {
   "desk_id": 2,
   "booking_date": "2026-11-29",
@@ -84,3 +85,27 @@ Authorization: Bearer super-secret-key
  ### throw forbidden error - 403
 GET http://localhost:5000/boom-forbidden
 
+### Add user
+POST http://localhost:5000/auth/register
+Content-Type: application/json
+
+{"first_name":"John","last_name":"Doe","email":"john.doe@example.com","password":"securepassword","team_id":1}
+ 
+
+### Login
+POST http://localhost:5000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{"email":"john.doe@example.com","password":"securepassword"}
+
+### create booking
+POST http://localhost:5000/bookings
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJqb2huLmRvZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5MDc4MzU2NywiZXhwIjoxNzkwNzg3MTY3LCJzdWIiOiIxIn0.QQ0VdLSoyTZvoIAuvXNO2iJdv_cENVx-NteRi9DdVV4
+
+{
+  "desk_id": 1,
+  "booking_date": "2026-09-29T00:00:00Z",
+  "active": true
+}
+ 

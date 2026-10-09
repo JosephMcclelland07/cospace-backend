@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import cors from 'cors';
 import authRouter from './routes/auth.routes';
 import bookingRouter from './routes/booking.routes';
 import { logger } from './middleware/logger';
@@ -7,11 +8,11 @@ import { NotFoundError } from './errors';
 import { HTTP_STATUS } from './constants/httpStatus';
 import { ForbiddenError } from "./errors/forbiddenError";
 
-
 export const app = express();
 
 const PORT = 5000;
 
+app.use(cors({ origin: 'http://localhost:3000' }));
 app.use(express.json());
 app.use(logger);
 
