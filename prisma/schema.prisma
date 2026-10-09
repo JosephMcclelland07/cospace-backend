@@ -58,7 +58,7 @@ model Booking {
   desk_id      Int
   booking_date DateTime @db.Date
   active       Boolean  @default(true)
-  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  createdBy    User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
   desk         Desk     @relation(fields: [desk_id], references: [id], onDelete: Cascade)
 
   @@unique([desk_id, booking_date], map: "uniq_desk_date")

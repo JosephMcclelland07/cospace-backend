@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { HTTP_STATUS } from '../constants/httpStatus';
+import { UnauthorizedError } from '../errors/unauthorizedError';
 import { BookingRepository } from '../repositories/booking.repository';
 import { BookingService } from '../services/booking.service';
 
@@ -72,7 +73,20 @@ export class BookingController {
     next: NextFunction
   ): Promise<void> => {
     try {
-      const booking = await this.bookingService.create(req.body);
+      const userId = req.user?.id;
+      if (typeof userId !== 'number') {
+        throw new UnauthorizedError('Authenticated user ID is missing');
+      }
+
+      const { desk_id, booking_date, active } = req.body;
+      const booking = await this.bookingService.create(
+        {
+          booking_date: new Date(booking_date),
+          active,
+        },
+        desk_id,
+        userId
+      );
       res.status(HTTP_STATUS.CREATED).json(booking);
     } catch (error) {
       next(error);

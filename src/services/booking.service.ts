@@ -35,8 +35,12 @@ export class BookingService {
     return this.bookingRepository.findById(id);
   }
 
-  create(data: Prisma.BookingUncheckedCreateInput): Promise<Booking> {
-    return this.bookingRepository.create(data);
+  create(
+    data: Omit<Prisma.BookingCreateInput, 'createdBy' | 'desk'>,
+    deskId: number,
+    userId: number
+  ): Promise<Booking> {
+    return this.bookingRepository.create(data, deskId, userId);
   }
 
   update(

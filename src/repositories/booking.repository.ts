@@ -22,8 +22,18 @@ export class BookingRepository {
     });
   }
 
-  create(data: Prisma.BookingUncheckedCreateInput): Promise<Booking> {
-    return prisma.booking.create({ data });
+  create(
+    data: Omit<Prisma.BookingCreateInput, 'createdBy' | 'desk'>,
+    deskId: number,
+    userId: number
+  ): Promise<Booking> {
+    return prisma.booking.create({
+      data: {
+        ...data,
+        desk: { connect: { id: deskId } },
+        createdBy: { connect: { id: userId } },
+      },
+    });
   }
 
   async update(
